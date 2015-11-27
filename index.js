@@ -107,7 +107,7 @@ var getCache = function (username, password) {
  * @param {string} username
  * @access private
  */
-var logError = function(err, username) {
+var logError = function (err, username) {
     this.logger.warn({
             username: username,
             errMsg: err.message,
@@ -176,17 +176,16 @@ Auth.prototype.authenticate = function(username, password, done) {
 /**
  * Adding a new user
  * Currently we do not support adding bitbucket users via private npm registry
- * So this method will always fail
+ * So this method is simplay alias for Auth.authenticate()
  *
+ * @see {@link Auth#authenticate}
  * @param {string} username - user name to add
  * @param {string} password - user password
  * @param done - success or failure callback
+ * @access public
  */
 Auth.prototype.add_user = function(username, password, done) {
-    var err = new Error('Adding users not supported for this registry');
-
-    logError(err, username);
-    done(err, false);
+    this.authenticate.apply(this, arguments);
 };
 
 module.exports = Auth;
