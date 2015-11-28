@@ -4,7 +4,7 @@
     "name": "Mykhailo Stadnyk",
     "email": "mikhus@gmail.com"
   },
-  "version": "1.0.6",
+  "version": "1.0.7",
   "description": "Sinopia module to authenticate users via Bitbucket",
   "keywords": [
     "sinopia",

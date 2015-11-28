@@ -102,6 +102,8 @@ function cleanup () {
             delete userCache[hash];
         }
     });
+
+    lastCleanup = new Date();
 }
 
 /**
