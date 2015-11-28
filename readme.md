@@ -13,8 +13,8 @@ As simple as running:
 
     auth:
       bitbucket:
-        ttl: 604800 # make cache live for 7 days
         allow: TeamOne(admin), TeamX(admin|collaborator), TeamZ
+        ttl: 604800 # make cache live for 7 days, optional, default = 1 day
     ...
     packages:
       '@myscope/*':
