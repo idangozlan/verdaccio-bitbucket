@@ -17,6 +17,8 @@ var bitbucket = require('bitbucket-api');
  */
 const CACHE_TTL = 24 * 60 * 60;
 
+var userCache = {};
+
 /**
  * Parses config allow option and returns result
  *
@@ -50,7 +52,7 @@ function empty (cache) {
         return true;
     }
 
-    return new Date().getTime() < cache.expires.getTime();
+    return new Date() >= cache.expires;
 };
 
 /**
@@ -70,7 +72,6 @@ function Auth (config, stuff) {
     this.allow = parseAllow(config.allow);
     this.ttl = (config.ttl || CACHE_TTL) * 1000;
     this.bitbucket = null;
-    this.userCache = {};
     this.logger = stuff.logger;
 }
 
@@ -92,11 +93,11 @@ var getCache = function (username, password) {
 
     var token = shasum.digest('hex');
 
-    if (!this.userCache[token]) {
-        this.userCache[token] = {};
+    if (!userCache[token]) {
+        userCache[token] = {};
     }
 
-    return this.userCache[token];
+    return userCache[token];
 };
 
 /**
@@ -132,9 +133,10 @@ Auth.prototype.authenticate = function(username, password, done) {
         password: password
     };
 
-    var cache = getCache.call(this, username, password);
+    var cache = getCache(username, password);
 
     if (!empty(cache)) {
+        console.log('cache hit!');
         return done(null, cache.teams);
     }
 
