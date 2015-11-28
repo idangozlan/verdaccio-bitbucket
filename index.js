@@ -4,6 +4,7 @@
  *
  * @author Mykhailo Stadnyk <mikhus@gmail.com>
  */
+
 var crypto = require('crypto');
 var bitbucket = require('bitbucket-api');
 
@@ -17,7 +18,30 @@ var bitbucket = require('bitbucket-api');
  */
 const CACHE_TTL = 24 * 60 * 60;
 
+/**
+ * Cache cleanup time-to-live flag in seconds
+ * It is used to run cleanup of the users cache once per given period
+ * to remove garbage out of the memory
+ *
+ * @type {number}
+ * @access private
+ */
+const CLEANUP_TTL = 60 * 60;
+
+/**
+ * Users cache storage
+ *
+ * @type {Object}
+ * @access private
+ */
 var userCache = {};
+
+/**
+ * Time cleanup
+ * @type {Date}
+ * @access private
+ */
+var lastCleanup = new Date();
 
 /**
  * Parses config allow option and returns result
@@ -26,11 +50,13 @@ var userCache = {};
  * @returns {Object}
  * @access private
  */
-function parseAllow(allow) {
+function parseAllow (allow) {
+    'use strict';
+
     var result = {};
 
     allow.split(/\s*,\s*/).forEach(function (team) {
-        var team = team.trim().match(/^(.*?)(\((.*?)\))?$/);
+        team = team.trim().match(/^(.*?)(\((.*?)\))?$/);
 
         result[team[1]] = team[3] ? team[3].split('|') : [];
     });
@@ -43,8 +69,11 @@ function parseAllow(allow) {
  *
  * @param {{teams: {Array}, expires: {Date}}} cache
  * @returns {boolean}
+ * @access private
  */
 function empty (cache) {
+    'use strict';
+
     if (!cache ||
         !(cache.teams instanceof Array) ||
         !(cache.expires instanceof Date)
@@ -53,26 +82,26 @@ function empty (cache) {
     }
 
     return new Date() >= cache.expires;
-};
+}
 
 /**
- * @class Auth
- * @classdesc Auth class implementing an Auth interface for Sinopia
- * @param {Object} config
- * @param {Object} stuff
- * @returns {Auth}
- * @constructor
- * @access public
+ * Removes all expired users from a cache
+ *
+ * @access private
  */
-function Auth (config, stuff) {
-    if (!(this instanceof Auth)) {
-        return new Auth(config, stuff);
+function cleanup () {
+    'use strict';
+
+    if (new Date().getTime() - lastCleanup.getTime() < CLEANUP_TTL) {
+        return ;
     }
 
-    this.allow = parseAllow(config.allow);
-    this.ttl = (config.ttl || CACHE_TTL) * 1000;
-    this.bitbucket = null;
-    this.logger = stuff.logger;
+    Object.keys(userCache).forEach(function (hash) {
+        if (empty(userCache[hash])) {
+            userCache[hash] = null;
+            delete userCache[hash];
+        }
+    });
 }
 
 /**
@@ -82,8 +111,11 @@ function Auth (config, stuff) {
  * @param {string} username
  * @param {string} password
  * @returns {{teams: {Array}, expires: {Date}}}
+ * @access private
  */
-var getCache = function (username, password) {
+function getCache (username, password) {
+    'use strict';
+
     var shasum = crypto.createHash('sha1');
 
     shasum.update(JSON.stringify({
@@ -98,7 +130,29 @@ var getCache = function (username, password) {
     }
 
     return userCache[token];
-};
+}
+
+/**
+ * @class Auth
+ * @classdesc Auth class implementing an Auth interface for Sinopia
+ * @param {Object} config
+ * @param {Object} stuff
+ * @returns {Auth}
+ * @constructor
+ * @access public
+ */
+function Auth (config, stuff) {
+    'use strict';
+
+    if (!(this instanceof Auth)) {
+        return new Auth(config, stuff);
+    }
+
+    this.allow = parseAllow(config.allow);
+    this.ttl = (config.ttl || CACHE_TTL) * 1000;
+    this.bitbucket = null;
+    this.logger = stuff.logger;
+}
 
 /**
  * Logs a given error
@@ -109,6 +163,8 @@ var getCache = function (username, password) {
  * @access private
  */
 var logError = function (err, username) {
+    'use strict';
+
     this.logger.warn({
             username: username,
             errMsg: err.message,
@@ -127,16 +183,21 @@ var logError = function (err, username) {
  * @param {Function} done - success or error callback
  * @access public
  */
-Auth.prototype.authenticate = function(username, password, done) {
+Auth.prototype.authenticate = function (username, password, done) {
+    'use strict';
+
     var credentials = {
         username: username,
         password: password
     };
 
+    // make sure we keep memory low
+    // run in background
+    setTimeout(cleanup);
+
     var cache = getCache(username, password);
 
     if (!empty(cache)) {
-        console.log('cache hit!');
         return done(null, cache.teams);
     }
 
@@ -160,7 +221,7 @@ Auth.prototype.authenticate = function(username, password, done) {
                         return false;
                     }
 
-                    if (this.allow[team].length == 0) {
+                    if (!this.allow[team].length) {
                         return true;
                     }
 
@@ -186,7 +247,9 @@ Auth.prototype.authenticate = function(username, password, done) {
  * @param done - success or failure callback
  * @access public
  */
-Auth.prototype.add_user = function(username, password, done) {
+Auth.prototype.add_user = function (username, password, done) {
+    'use strict';
+
     this.authenticate.apply(this, arguments);
 };
 
