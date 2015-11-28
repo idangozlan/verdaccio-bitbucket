@@ -4,7 +4,7 @@
     "name": "Mykhailo Stadnyk",
     "email": "mikhus@gmail.com"
   },
-  "version": "1.0.4",
+  "version": "1.0.5",
   "description": "Sinopia module to authenticate users via Bitbucket",
   "keywords": [
     "sinopia",
@@ -17,6 +17,10 @@
     "javascript"
   ],
   "license" : "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/Mikhus/sinopia-bitbucket.git"
+  },
   "engines": {
     "node": "*"
   },
