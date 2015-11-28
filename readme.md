@@ -30,7 +30,7 @@ from the configured "allow" option.
 This option provides a way to specify which teams and their roles should be
 authorized by Sinopia. If team name is set without roles it would be treated
 as any role grants a successful sign in for the user. Controversial, if roles 
-are specified within the team, Sinopia will check if signed user are has an
+are specified within the team, Sinopia will check if signed user has an
 appropriate role in the team.
 
 After this it is becomes possible to configure team-based access to the packages
