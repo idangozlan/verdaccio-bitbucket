@@ -107,6 +107,28 @@ function cleanup () {
 }
 
 /**
+ * Decodes a username to an email address.
+ * 
+ * Since the local portion of email addresses
+ * can't end with a dot or contain two consecutive
+ * dots, we can replace the `@` with `..`. This
+ * function converts from the above encoding to
+ * a proper email address.
+ * 
+ * @param {string} username
+ * @returns {string}
+ * @access private
+ */
+function decodeUsernameToEmail(username) {
+    var pos = username.lastIndexOf('..');
+    if (pos === -1) {
+        return username;
+    }
+  
+    return username.substr(0, pos) + '@' + username.substr(pos + 2);
+}
+
+/**
  * Returns cached record for a given user
  * This is private method running in context of Auth object
  *
@@ -121,7 +143,7 @@ function getCache (username, password) {
     var shasum = crypto.createHash('sha1');
 
     shasum.update(JSON.stringify({
-        username: username,
+        username: decodeUsernameToEmail(username),
         password: password
     }));
 
