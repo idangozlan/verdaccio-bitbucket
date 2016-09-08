@@ -107,7 +107,13 @@ function cleanup () {
 }
 
 /**
- * Decodes a username to an email address
+ * Decodes a username to an email address.
+ * 
+ * Since the local portion of email addresses
+ * can't end with a dot or contain two consecutive
+ * dots, we can replace the `@` with `..`. This
+ * function converts from the above encoding to
+ * a proper email address.
  * 
  * @param {string} username
  * @returns {string}
@@ -119,7 +125,7 @@ function decodeUsernameToEmail(username) {
         return username;
     }
   
-    return username.substr(0, pos) + '@' + username.substr(pos+2);
+    return username.substr(0, pos) + '@' + username.substr(pos + 2);
 }
 
 /**
