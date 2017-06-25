@@ -5,7 +5,7 @@
     "email": "idangozlan@gmail.com"
   },
   "scripts": {
-    "clean:build": "rimraf lib",
+    "clean:build": "rimraf ./lib",
     "build": "babel ./src --out-dir lib",
     "lint": "eslint ./src --fix",
     "prebuild": "npm run clean:build",
