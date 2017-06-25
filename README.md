@@ -1,3 +1,5 @@
+[![Build Status](https://travis-ci.org/idangozlan/verdaccio-bitbucket.svg?branch=master)](https://travis-ci.org/idangozlan/verdaccio-bitbucket)
+
 `verdaccio-bitbucket` is a fork of `sinopia-bitbucket`. It aims to keep backwards compatibility with sinopia, while keeping up with npm changes.
 
 # Verdaccio Module For User Auth Via Bitbucket
