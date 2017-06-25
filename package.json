@@ -26,6 +26,6 @@
   },
   "preferGlobal": true,
   "dependencies": {
-    "bitbucket-api": "0.0.7"
+    "bitbucket-api": "^0.1.0"
   }
 }
