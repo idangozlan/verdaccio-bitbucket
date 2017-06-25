@@ -165,18 +165,13 @@ function Auth(config, stuff) {
  * Logs a given error
  * This is private method running in context of Auth object
  *
+ * @param {object} logger
  * @param {string} err
  * @param {string} username
  * @access private
  */
-const logError = (err, username) => {
-  this.logger.warn({
-    username,
-    errMsg: err.message,
-    code: err.code,
-  },
-        '@{code}, user: @{username}, BITBUCKER error: @{errMsg}',
-    );
+const logError = (logger, err, username) => {
+  logger.warn(`${err.code}, user: ${username}, Bitbucket API adaptor error: ${err.message}`);
 };
 
 /**
@@ -188,7 +183,7 @@ const logError = (err, username) => {
  * @param {Function} done - success or error callback
  * @access public
  */
-Auth.prototype.authenticate = (username, password, done) => {
+Auth.prototype.authenticate = function authenticate(username, password, done) {
   const credentials = {
     username: decodeUsernameToEmail(username),
     password,
@@ -208,13 +203,13 @@ Auth.prototype.authenticate = (username, password, done) => {
 
   return this.bitbucket.user().get((err) => {
     if (err) {
-      logError.call(this, err, username);
+      logError(this.logger, err, username);
       return done(err, false);
     }
 
     return this.bitbucket.user().privileges((err2, privileges) => {
       if (err2) {
-        logError.call(this, err2, username);
+        logError(this.logger, err2, username);
         return done(err2, false);
       }
 
@@ -237,21 +232,6 @@ Auth.prototype.authenticate = (username, password, done) => {
       return done(null, teams);
     });
   });
-};
-
-/**
- * Adding a new user
- * Currently we do not support adding bitbucket users via private npm registry
- * So this method is simplay alias for Auth.authenticate()
- *
- * @see {@link Auth#authenticate}
- * @param {string} username - user name to add
- * @param {string} password - user password
- * @param done - success or failure callback
- * @access public
- */
-Auth.prototype.add_user = (username, password, done) => {
-  done('Add User feature is not supported yet.');
 };
 
 module.exports = Auth;
