@@ -143,7 +143,7 @@ function getCache(username, password) {
 
 /**
  * @class Auth
- * @classdesc Auth class implementing an Auth interface for Sinopia
+ * @classdesc Auth class implementing an Auth interface for Verdaccio
  * @param {Object} config
  * @param {Object} stuff
  * @returns {Auth}

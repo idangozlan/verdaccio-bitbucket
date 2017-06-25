@@ -1,4 +1,4 @@
-verdaccio-bitbucket is a fork of sinopia-bitbucket. It aims to keep backwards compatibility with sinopia, while keeping up with npm changes.
+`verdaccio-bitbucket` is a fork of `sinopia-bitbucket`. It aims to keep backwards compatibility with sinopia, while keeping up with npm changes.
 
 # Verdaccio Module For User Auth Via Bitbucket
 
@@ -44,4 +44,3 @@ It is currently not supported adding Bitbucket user via npm command line.
 Maybe I will add this option in the future if there would be such need.
 If you want to help improve this module - feel free to contribute or do whatever
 you want. License is MIT, as usual.
-
