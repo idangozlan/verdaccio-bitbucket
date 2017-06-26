@@ -9,7 +9,8 @@
     "build": "babel ./src --out-dir lib",
     "lint": "eslint ./src --fix",
     "prebuild": "npm run clean:build",
-    "prepublish": "npm run build"
+    "prepublish": "npm run build",
+    "postinstall": "npm run build"
   },
   "main": "lib/index.js",
   "version": "1.0.4",
