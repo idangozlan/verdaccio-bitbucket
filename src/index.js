@@ -1,5 +1,39 @@
 import Crypto from 'crypto';
-import Bitbucket from 'bitbucket-api';
+import axios from 'axios';
+
+class Bitbucket2 {
+  constructor(username, password) {
+    this.apiVersion = '1.0';
+    this.apiUrl = `https://api.bitbucket.org/${this.apiVersion}`;
+    this.username = username;
+    this.password = password;
+  }
+
+  getUser() {
+    // currently not in use, maybe in the future it will be.
+    const { username, password, apiUrl } = this;
+    return axios({
+      method: 'get',
+      url: `${apiUrl}/user`,
+      auth: {
+        username,
+        password,
+      },
+    }).then(response => response.data);
+  }
+
+  getPrivileges() {
+    const { username, password, apiUrl } = this;
+    return axios({
+      method: 'get',
+      url: `${apiUrl}/user/privileges/`,
+      auth: {
+        username,
+        password,
+      },
+    }).then(response => response.data);
+  }
+}
 
 /**
  * Default cache time-to-live in seconds
@@ -184,13 +218,8 @@ const logError = (logger, err, username) => {
  * @access public
  */
 Auth.prototype.authenticate = function authenticate(username, password, done) {
-  const credentials = {
-    username: decodeUsernameToEmail(username),
-    password,
-  };
-
-    // make sure we keep memory low
-    // run in background
+  // make sure we keep memory low
+  // run in background
   setTimeout(cleanup);
 
   const cache = getCache(username, password);
@@ -199,38 +228,29 @@ Auth.prototype.authenticate = function authenticate(username, password, done) {
     return done(null, cache.teams);
   }
 
-  this.bitbucket = Bitbucket.createClient(credentials);
+  this.bitbucket = new Bitbucket2(decodeUsernameToEmail(username), password);
 
-  return this.bitbucket.user().get((err) => {
-    if (err) {
-      logError(this.logger, err, username);
-      return done(err, false);
-    }
+  return this.bitbucket.getPrivileges().then((privileges) => {
+    const teams = Object.keys(privileges.teams)
+      .filter((team) => {
+        if (this.allow[team] === undefined) {
+          return false;
+        }
 
-    return this.bitbucket.user().privileges((err2, privileges) => {
-      if (err2) {
-        logError(this.logger, err2, username);
-        return done(err2, false);
-      }
+        if (!this.allow[team].length) {
+          return true;
+        }
 
-      const teams = Object.keys(privileges.teams)
-                .filter((team) => {
-                  if (this.allow[team] === undefined) {
-                    return false;
-                  }
+        return this.allow[team].includes(privileges.teams[team]);
+      }, this);
 
-                  if (!this.allow[team].length) {
-                    return true;
-                  }
+    cache.teams = teams;
+    cache.expires = new Date(new Date().getTime() + this.ttl);
 
-                  return this.allow[team].includes(privileges.teams[team]);
-                }, this);
-
-      cache.teams = teams;
-      cache.expires = new Date(new Date().getTime() + this.ttl);
-
-      return done(null, teams);
-    });
+    return done(null, teams);
+  }).catch((err) => {
+    logError(this.logger, err, username);
+    return done(err, false);
   });
 };
 
