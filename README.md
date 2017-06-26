@@ -1,4 +1,6 @@
 [![Build Status](https://travis-ci.org/idangozlan/verdaccio-bitbucket.svg?branch=master)](https://travis-ci.org/idangozlan/verdaccio-bitbucket)
+[![Download Status](https://img.shields.io/npm/dm/verdaccio-bitbucket.svg)](https://www.npmjs.com/package/verdaccio-bitbucket)
+[![Download Status](https://img.shields.io/npm/v/verdaccio-bitbucket.svg)](https://www.npmjs.com/package/verdaccio-bitbucket)
 
 `verdaccio-bitbucket` is a fork of `sinopia-bitbucket`. It aims to keep backwards compatibility with sinopia, while keeping up with npm changes.
 
