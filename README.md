@@ -13,7 +13,7 @@ Bitbucket API.
 
 As simple as running:
 
-    $ npm install -g sinopia-bitbucket
+    $ npm install -g verdaccio-bitbucket
 
 ## Configure
 
