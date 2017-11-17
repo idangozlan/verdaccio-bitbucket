@@ -42,6 +42,18 @@ appropriate role in the team.
 After this it is becomes possible to configure team-based access to the packages
 as seen on config example above.
 
+### Loging In
+
+To log in using NPM, run:
+
+```
+    npm adduser --registry  https://your.registry.local
+```
+Since the username for bitbucket is the email addresses 
+and cannot contain `@`, replace the `@` with two peiods `..`
+The email address is then parsed and converted to a normal email address for authentication
+
+
 ### Notes
 
 It is currently not supported adding Bitbucket user via npm command line.
