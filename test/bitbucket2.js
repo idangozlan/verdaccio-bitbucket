@@ -11,21 +11,67 @@ describe('Bitbucket2', () => {
     moxios.uninstall();
   });
 
-  describe('#getPrivileges', () => {
-    it('should return privileges extracted from the teams key', (done) => {
-      moxios.stubRequest('https://api.bitbucket.org/1.0/user/privileges/', {
+  describe('#getTeams', () => {
+    it('should return the teams', () => {
+      moxios.stubRequest(/^https:\/\/api.bitbucket.org\/2.0\/teams\?role=member&pagelen=\d+$/, {
         status: 200,
         response: {
-          teams: {
-            foo: 'admin',
-            bar: 'collaborator',
-          },
+          values: [
+            { username: 'foo' },
+            { username: 'bar' },
+          ],
         },
       });
-      new Bitbucket2('u', 'p').getPrivileges().then((response) => {
-        expect(response.teams.foo).to.equal('admin');
-        expect(response.teams.bar).to.equal('collaborator');
-        done();
+      return new Bitbucket2('u', 'p').getTeams('member').then((response) => {
+        expect(response).to.deep.equal({
+          role: 'member',
+          teams: ['foo', 'bar'],
+        });
+      });
+    });
+
+    it('should follow next page links', () => {
+      moxios.stubRequest(/^https:\/\/api.bitbucket.org\/2.0\/teams\?role=member&pagelen=\d+$/, {
+        status: 200,
+        response: {
+          next: 'https://example.org/page2',
+          values: [
+            { username: 'foo' },
+          ],
+        },
+      });
+      moxios.stubRequest('https://example.org/page2', {
+        status: 200,
+        response: {
+          values: [
+            { username: 'bar' },
+            { username: 'baz' },
+          ],
+        },
+      });
+      return new Bitbucket2('u', 'p').getTeams('member').then((response) => {
+        expect(response).to.deep.equal({
+          role: 'member',
+          teams: ['foo', 'bar', 'baz'],
+        });
+      });
+    });
+  });
+
+  describe('#getPrivileges', () => {
+    it('should return privileges returned by getTeams', () => {
+      const bb = new Bitbucket2('u', 'p');
+      bb.getTeams = role => new Promise((resolve) => {
+        resolve({ role, teams: [`${role}Team`] });
+      });
+      return bb.getPrivileges().then((response) => {
+        expect(response).to.deep.equal({
+          teams: {
+            memberTeam: 'member',
+            contributorTeam: 'contributor',
+            adminTeam: 'admin',
+          },
+        });
       });
     });
   });
