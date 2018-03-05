@@ -1,74 +1,5 @@
-import Crypto from 'crypto';
-import axios from 'axios';
-
-class Bitbucket2 {
-  constructor(username, password) {
-    this.apiVersion = '1.0';
-    this.apiUrl = `https://api.bitbucket.org/${this.apiVersion}`;
-    this.username = username;
-    this.password = password;
-  }
-
-  getUser() {
-    // currently not in use, maybe in the future it will be.
-    const { username, password, apiUrl } = this;
-    return axios({
-      method: 'get',
-      url: `${apiUrl}/user`,
-      auth: {
-        username,
-        password,
-      },
-    }).then(response => response.data);
-  }
-
-  getPrivileges() {
-    const { username, password, apiUrl } = this;
-    return axios({
-      method: 'get',
-      url: `${apiUrl}/user/privileges/`,
-      auth: {
-        username,
-        password,
-      },
-    }).then(response => response.data);
-  }
-}
-
-/**
- * Default cache time-to-live in seconds
- * It could be changed via config ttl option,
- * which should be also defined in seconds
- *
- * @type {number}
- * @access private
- */
-const CACHE_TTL = 24 * 60 * 60;
-
-/**
- * Cache cleanup time-to-live flag in seconds
- * It is used to run cleanup of the users cache once per given period
- * to remove garbage out of the memory
- *
- * @type {number}
- * @access private
- */
-const CLEANUP_TTL = 60 * 60;
-
-/**
- * Users cache storage
- *
- * @type {Object}
- * @access private
- */
-const userCache = {};
-
-/**
- * Time cleanup
- * @type {Date}
- * @access private
- */
-let lastCleanup = new Date();
+import Bitbucket2 from './bitbucket2';
+import cache from './cache';
 
 /**
  * Parses config allow option and returns result
@@ -87,44 +18,6 @@ function parseAllow(allow) {
   });
 
   return result;
-}
-
-/**
- * Checks if a given cache object should be treated as empty
- *
- * @param {{teams: {Array}, expires: {Date}}} cache
- * @returns {boolean}
- * @access private
- */
-function empty(cache) {
-  if (!cache ||
-        !(cache.teams instanceof Array) ||
-        !(cache.expires instanceof Date)
-    ) {
-    return true;
-  }
-
-  return new Date() >= cache.expires;
-}
-
-/**
- * Removes all expired users from a cache
- *
- * @access private
- */
-function cleanup() {
-  if (new Date().getTime() - lastCleanup.getTime() < CLEANUP_TTL) {
-    return;
-  }
-
-  Object.keys(userCache).forEach((hash) => {
-    if (empty(userCache[hash])) {
-      userCache[hash] = null;
-      delete userCache[hash];
-    }
-  });
-
-  lastCleanup = new Date();
 }
 
 /**
@@ -150,32 +43,6 @@ function decodeUsernameToEmail(username) {
 }
 
 /**
- * Returns cached record for a given user
- * This is private method running in context of Auth object
- *
- * @param {string} username
- * @param {string} password
- * @returns {{teams: {Array}, expires: {Date}}}
- * @access private
- */
-function getCache(username, password) {
-  const shasum = Crypto.createHash('sha1');
-
-  shasum.update(JSON.stringify({
-    username,
-    password,
-  }));
-
-  const token = shasum.digest('hex');
-
-  if (!userCache[token]) {
-    userCache[token] = {};
-  }
-
-  return userCache[token];
-}
-
-/**
  * @class Auth
  * @classdesc Auth class implementing an Auth interface for Verdaccio
  * @param {Object} config
@@ -190,8 +57,8 @@ function Auth(config, stuff) {
   }
 
   this.allow = parseAllow(config.allow);
-  this.ttl = (config.ttl || CACHE_TTL) * 1000;
-  this.bitbucket = null;
+  this.ttl = (config.ttl || cache.CACHE_TTL) * 1000;
+  this.Bitbucket = Bitbucket2;
   this.logger = stuff.logger;
 }
 
@@ -220,17 +87,17 @@ const logError = (logger, err, username) => {
 Auth.prototype.authenticate = function authenticate(username, password, done) {
   // make sure we keep memory low
   // run in background
-  setTimeout(cleanup);
+  setTimeout(cache.cleanup);
 
-  const cache = getCache(username, password);
+  const user = cache.getCache(username, password);
 
-  if (!empty(cache)) {
-    return done(null, cache.teams);
+  if (!cache.empty(user)) {
+    return done(null, user.teams);
   }
 
-  this.bitbucket = new Bitbucket2(decodeUsernameToEmail(username), password);
+  const bitbucket = new this.Bitbucket2(decodeUsernameToEmail(username), password);
 
-  return this.bitbucket.getPrivileges().then((privileges) => {
+  return bitbucket.getPrivileges().then((privileges) => {
     const teams = Object.keys(privileges.teams)
       .filter((team) => {
         if (this.allow[team] === undefined) {
@@ -244,8 +111,8 @@ Auth.prototype.authenticate = function authenticate(username, password, done) {
         return this.allow[team].includes(privileges.teams[team]);
       }, this);
 
-    cache.teams = teams;
-    cache.expires = new Date(new Date().getTime() + this.ttl);
+    user.teams = teams;
+    user.expires = new Date(new Date().getTime() + this.ttl);
 
     return done(null, teams);
   }).catch((err) => {
