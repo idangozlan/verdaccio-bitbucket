@@ -58,7 +58,7 @@ function Auth(config, stuff) {
 
   this.allow = parseAllow(config.allow);
   this.ttl = (config.ttl || cache.CACHE_TTL) * 1000;
-  this.Bitbucket = Bitbucket2;
+  this.Bitbucket2 = Bitbucket2;
   this.logger = stuff.logger;
 }
 
