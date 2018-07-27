@@ -121,4 +121,8 @@ Auth.prototype.authenticate = function authenticate(username, password, done) {
   });
 };
 
+Auth.prototype.adduser = function addUser(user, password, cb) {
+  cb(null, true);
+}
+
 module.exports = Auth;
