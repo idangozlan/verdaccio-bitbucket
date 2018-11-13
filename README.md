@@ -53,8 +53,9 @@ Since the username for bitbucket is the email addresses
 and cannot contain `@`, replace the `@` with two peiods `..`
 The email address is then parsed and converted to a normal email address for authentication
 
-
 ### Notes
+
+Please be aware, that self-hosted "Bitbucket Server" are not supported. If you need support for Bitbucket Server please refer to [verdaccio-bitbucket-server](https://github.com/oeph/verdaccio-bitbucket-server).
 
 It is currently not supported adding Bitbucket user via npm command line.
 Maybe I will add this option in the future if there would be such need.
