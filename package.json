@@ -8,9 +8,7 @@
     "clean:build": "rimraf ./lib",
     "build": "babel ./src --out-dir lib",
     "lint": "eslint ./src --fix",
-    "prebuild": "npm run clean:build",
-    "prepublish": "npm run build",
-    "postinstall": "npm run build",
+    "prepublishOnly": "npm run build",
     "test": "npm run build && mocha"
   },
   "main": "lib/index.js",
