@@ -1,7 +1,6 @@
-const expect = require('chai').expect;
 const moxios = require('moxios');
 
-const Bitbucket2 = require('../lib/bitbucket2');
+const Bitbucket2Test = require('../bitbucket2');
 
 describe('Bitbucket2', () => {
   beforeEach(() => {
@@ -13,6 +12,7 @@ describe('Bitbucket2', () => {
 
   describe('#getTeams', () => {
     it('should return the teams', () => {
+      expect.assertions(1);
       moxios.stubRequest(/^https:\/\/api.bitbucket.org\/2.0\/teams\?role=member&pagelen=\d+$/, {
         status: 200,
         response: {
@@ -22,8 +22,8 @@ describe('Bitbucket2', () => {
           ],
         },
       });
-      return new Bitbucket2('u', 'p').getTeams('member').then((response) => {
-        expect(response).to.deep.equal({
+      return new Bitbucket2Test('u', 'p').getTeams('member').then((response) => {
+        expect(response).toEqual({
           role: 'member',
           teams: ['foo', 'bar'],
         });
@@ -49,8 +49,8 @@ describe('Bitbucket2', () => {
           ],
         },
       });
-      return new Bitbucket2('u', 'p').getTeams('member').then((response) => {
-        expect(response).to.deep.equal({
+      return new Bitbucket2Test('u', 'p').getTeams('member').then((response) => {
+        expect(response).toEqual({
           role: 'member',
           teams: ['foo', 'bar', 'baz'],
         });
@@ -60,12 +60,12 @@ describe('Bitbucket2', () => {
 
   describe('#getPrivileges', () => {
     it('should return privileges returned by getTeams', () => {
-      const bb = new Bitbucket2('u', 'p');
+      const bb = new Bitbucket2Test('u', 'p');
       bb.getTeams = role => new Promise((resolve) => {
         resolve({ role, teams: [`${role}Team`] });
       });
       return bb.getPrivileges().then((response) => {
-        expect(response).to.deep.equal({
+        expect(response).toEqual({
           teams: {
             memberTeam: 'member',
             contributorTeam: 'contributor',

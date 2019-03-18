@@ -1,7 +1,5 @@
-const expect = require('chai').expect;
-
-const cache = require('../lib/cache');
-const Auth = require('../lib/index');
+const cache = require('../cache');
+const Auth = require('..');
 
 describe('Auth', () => {
   let logger;
@@ -26,79 +24,89 @@ describe('Auth', () => {
 
   describe('#ctor', () => {
     it('should parse an empty team', () => {
+      expect.assertions(1);
       const auth = createAuth('foo');
-      expect(auth.allow).to.deep.equal({ foo: [] });
+      expect(auth.allow).toEqual({ foo: [] });
     });
 
     it('should parse a team with roles', () => {
+      expect.assertions(1);
       const auth = createAuth('foo(bar|baz)');
-      expect(auth.allow).to.deep.equal({ foo: ['bar', 'baz'] });
+      expect(auth.allow).toEqual({ foo: ['bar', 'baz'] });
     });
   });
 
   describe('#authenticate', () => {
     it('should deny entry when the bitbucket call fails', (done) => {
+      expect.assertions(2);
       Bitbucket2.prototype.getPrivileges = () => new Promise((resolve, reject) => {
         reject({ code: 'foo', message: 'bar' });
       });
       const auth = createAuth('foo');
 
       auth.authenticate('u', 'p', (err, teams) => {
-        expect(err).to.exist;
-        expect(!!teams).to.be.false;
+        expect(err).toEqual({
+          code: 'foo',
+          message: 'bar',
+        });
+        expect(teams).toEqual(false);
         done();
       });
     });
 
     it('should deny entry when the user does not have a matching team', (done) => {
+      expect.assertions(2);
       Bitbucket2.prototype.getPrivileges = () => new Promise((resolve) => {
         resolve({ teams: { foo: 'admin' } });
       });
       const auth = createAuth('bar');
 
       auth.authenticate('u', 'p', (err, teams) => {
-        expect(err).to.not.exist;
-        expect(teams).to.be.empty;
+        expect(err).toEqual(null);
+        expect(teams).toEqual([]);
         done();
       });
     });
 
     it('should deny entry when the user has a matching team but not role', (done) => {
+      expect.assertions(2);
       Bitbucket2.prototype.getPrivileges = () => new Promise((resolve) => {
         resolve({ teams: { foo: 'admin' } });
       });
       const auth = createAuth('foo(contributor)');
 
       auth.authenticate('u', 'p', (err, teams) => {
-        expect(err).to.not.exist;
-        expect(teams).to.be.empty;
+        expect(err).toEqual(null);
+        expect(teams).toEqual([]);
         done();
       });
     });
 
     it('should allow entry when the user has a matching team', (done) => {
+      expect.assertions(3);
       Bitbucket2.prototype.getPrivileges = () => new Promise((resolve) => {
         resolve({ teams: { foo: 'admin' } });
       });
       const auth = createAuth('foo');
 
       auth.authenticate('u', 'p', (err, teams) => {
-        expect(err).to.not.exist;
-        expect(auth.allow).to.deep.equal({ foo: [] });
-        expect(teams).to.deep.equal(['foo']);
+        expect(err).toEqual(null);
+        expect(auth.allow).toEqual({ foo: [] });
+        expect(teams).toEqual(['foo']);
         done();
       });
     });
 
     it('should allow entry when the user has a matching team and role', (done) => {
+      expect.assertions(2);
       Bitbucket2.prototype.getPrivileges = () => new Promise((resolve) => {
         resolve({ teams: { foo: 'admin' } });
       });
       const auth = createAuth('foo(admin)');
 
       auth.authenticate('u', 'p', (err, teams) => {
-        expect(err).to.not.exist;
-        expect(teams).to.deep.equal(['foo']);
+        expect(err).toEqual(null);
+        expect(teams).toEqual(['foo']);
         done();
       });
     });
