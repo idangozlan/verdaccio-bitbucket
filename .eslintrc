@@ -2,10 +2,14 @@
   "extends": "eslint-config-airbnb-base",
   "env": {
     "node": true,
-    "mocha": true
+    "jest/globals": true
   },
   "rules": {
+    "prefer-promise-reject-errors": 0,
   },
+  "plugins": [
+    "jest"
+  ],
   "globals": {
     "__DEVELOPMENT__": true
   }
