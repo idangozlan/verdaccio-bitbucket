@@ -1,4 +1,4 @@
-import Crypto from 'crypto';
+const Crypto = require('crypto');
 
 /**
  * Default cache time-to-live in seconds
@@ -43,10 +43,10 @@ let lastCleanup = new Date();
  * @access private
  */
 function empty(cache) {
-  if (!cache ||
-        !(cache.teams instanceof Array) ||
-        !(cache.expires instanceof Date)
-    ) {
+  if (!cache
+        || !(cache.teams instanceof Array)
+        || !(cache.expires instanceof Date)
+  ) {
     return true;
   }
 

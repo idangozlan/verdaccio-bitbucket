@@ -1,5 +1,5 @@
-import Bitbucket2 from './bitbucket2';
-import cache from './cache';
+const Bitbucket2 = require('./bitbucket2');
+const cache = require('./cache');
 
 /**
  * Parses config allow option and returns result
