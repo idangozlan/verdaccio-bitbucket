@@ -21,28 +21,6 @@ function parseAllow(allow) {
 }
 
 /**
- * Decodes a username to an email address.
- *
- * Since the local portion of email addresses
- * can't end with a dot or contain two consecutive
- * dots, we can replace the `@` with `..`. This
- * function converts from the above encoding to
- * a proper email address.
- *
- * @param {string} username
- * @returns {string}
- * @access private
- */
-function decodeUsernameToEmail(username) {
-  const pos = username.lastIndexOf('..');
-  if (pos === -1) {
-    return username;
-  }
-
-  return `${username.substr(0, pos)}@${username.substr(pos + 2)}`;
-}
-
-/**
  * @class Auth
  * @classdesc Auth class implementing an Auth interface for Verdaccio
  * @param {Object} config
@@ -57,10 +35,37 @@ function Auth(config, stuff) {
   }
 
   this.allow = parseAllow(config.allow);
+  this.defaultMailDomain = config.defaultMailDomain;
   this.ttl = (config.ttl || cache.CACHE_TTL) * 1000;
   this.Bitbucket2 = Bitbucket2;
   this.logger = stuff.logger;
 }
+
+/**
+ * Decodes a username to an email address.
+ *
+ * Since the local portion of email addresses
+ * can't end with a dot or contain two consecutive
+ * dots, we can replace the `@` with `..`. This
+ * function converts from the above encoding to
+ * a proper email address.
+ *
+ * @param {string} username
+ * @returns {string}
+ * @access private
+ */
+Auth.prototype.decodeUsernameToEmail = function decodeUsernameToEmail(username) {
+  const pos = username.lastIndexOf('..');
+  if (pos === -1) {
+    if (this.defaultMailDomain) {
+      return `${username}@${this.defaultMailDomain}`;
+    }
+
+    return username;
+  }
+
+  return `${username.substr(0, pos)}@${username.substr(pos + 2)}`;
+};
 
 /**
  * Logs a given error
@@ -95,7 +100,7 @@ Auth.prototype.authenticate = function authenticate(username, password, done) {
     return done(null, user.teams);
   }
 
-  const bitbucket = new this.Bitbucket2(decodeUsernameToEmail(username), password);
+  const bitbucket = new this.Bitbucket2(this.decodeUsernameToEmail(username), password);
 
   return bitbucket.getPrivileges().then((privileges) => {
     const teams = Object.keys(privileges.teams)
