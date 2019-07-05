@@ -1,4 +1,4 @@
-import axios from 'axios';
+const axios = require('axios');
 
 class Bitbucket2 {
   constructor(username, password) {

@@ -2,21 +2,14 @@
   "extends": "eslint-config-airbnb-base",
   "env": {
     "node": true,
-    "mocha": true
+    "jest/globals": true
   },
   "rules": {
+    "prefer-promise-reject-errors": 0,
   },
   "plugins": [
-    "import"
+    "jest"
   ],
-  "parser": "babel-eslint",
-  "parserOptions": {
-    "ecmaVersion": 2017,
-    "sourceType": "module",
-    "ecmaFeatures": {
-      "experimentalObjectRestSpread": true
-    }
-  },
   "globals": {
     "__DEVELOPMENT__": true
   }
