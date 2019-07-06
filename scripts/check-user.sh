@@ -18,8 +18,8 @@ define SOURCE <<'EOF'
     const dir = process.argv[1];
     const username = process.argv[2];
     const password = process.argv[3];
-    const Bitbucket2 = require(`${dir}/../lib/bitbucket2`);
-    new Bitbucket2(username, password).getPrivileges().then((result) => {
+    const Bitbucket = require(`${dir}/../lib/models/Bitbucket`);
+    new Bitbucket(username, password, console).getPrivileges().then((result) => {
         console.log('%j', result);
     }).catch((err) => {
         console.error(`ERROR: ${err.code}, user: ${username}, Bitbucket API error: ${err.message}`);
