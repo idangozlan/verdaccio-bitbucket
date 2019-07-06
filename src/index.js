@@ -1,5 +1,19 @@
-const Bitbucket2 = require('./bitbucket2');
-const cache = require('./cache');
+const NodeCache = require('node-cache');
+const Bitbucket = require('./models/Bitbucket');
+const getRedisClient = require('./redis');
+const { CACHE_REDIS, CACHE_IN_MEMORY } = require('./constants');
+
+const ALLOWED_CACHE_ENGINES = [CACHE_IN_MEMORY, CACHE_REDIS];
+
+/**
+ * Default cache time-to-live in seconds
+ * It could be changed via config ttl option,
+ * which should be also defined in seconds
+ *
+ * @type {number}
+ * @access private
+ */
+const DEFAULT_CACHE_TTL = 24 * 60 * 60 * 7;
 
 /**
  * Parses config allow option and returns result
@@ -34,10 +48,35 @@ function Auth(config, stuff) {
     return new Auth(config, stuff);
   }
 
+  const cacheEngine = config.cache || false;
+  if (config.cache && !ALLOWED_CACHE_ENGINES.includes(cacheEngine)) {
+    throw Error(`Invalid cache engine ${cacheEngine}, please use on of these: [${ALLOWED_CACHE_ENGINES.join(', ')}]`);
+  }
+
+  this.cacheEngine = cacheEngine;
+
+  switch (this.cacheEngine) {
+    case CACHE_REDIS:
+      if (!config.redis) {
+        throw Error('Can\'t find Redis configuration');
+      }
+      this.cache = getRedisClient(config.redis);
+      break;
+    case CACHE_IN_MEMORY:
+      this.cache = new NodeCache();
+      break;
+    default:
+      this.cache = false;
+  }
+
+  this.bcrypt = config.hashPassword !== false ? require('bcrypt') : { // eslint-disable-line
+    compareSync: (a, b) => (a === b),
+    hashSync: password => password,
+  };
+
   this.allow = parseAllow(config.allow);
   this.defaultMailDomain = config.defaultMailDomain;
-  this.ttl = (config.ttl || cache.CACHE_TTL) * 1000;
-  this.Bitbucket2 = Bitbucket2;
+  this.ttl = (config.ttl || DEFAULT_CACHE_TTL) * 1000;
   this.logger = stuff.logger;
 }
 
@@ -89,20 +128,27 @@ const logError = (logger, err, username) => {
  * @param {Function} done - success or error callback
  * @access public
  */
-Auth.prototype.authenticate = function authenticate(username, password, done) {
-  // make sure we keep memory low
-  // run in background
-  setTimeout(cache.cleanup);
-
-  const user = cache.getCache(username, password);
-
-  if (!cache.empty(user)) {
-    return done(null, user.teams);
+Auth.prototype.authenticate = async function authenticate(username, password, done) {
+  if (this.cache) {
+    try {
+      let cached = await this.cache.get(username);
+      if (cached) {
+        cached = JSON.parse(cached);
+      }
+      if (cached && this.bcrypt.compareSync(password, cached.password)) {
+        return done(null, cached.teams);
+      }
+    } catch (err) {
+      this.logger.warn('Cant get from cache', err);
+    }
   }
+  const bitbucket = new Bitbucket(
+    this.decodeUsernameToEmail(username),
+    password,
+    this.logger,
+  );
 
-  const bitbucket = new this.Bitbucket2(this.decodeUsernameToEmail(username), password);
-
-  return bitbucket.getPrivileges().then((privileges) => {
+  return bitbucket.getPrivileges().then(async (privileges) => {
     const teams = Object.keys(privileges.teams)
       .filter((team) => {
         if (this.allow[team] === undefined) {
@@ -116,8 +162,14 @@ Auth.prototype.authenticate = function authenticate(username, password, done) {
         return this.allow[team].includes(privileges.teams[team]);
       }, this);
 
-    user.teams = teams;
-    user.expires = new Date(new Date().getTime() + this.ttl);
+    if (this.cache) {
+      const hashedPassword = this.bcrypt.hashSync(password, 10);
+      try {
+        await this.cache.set(username, JSON.stringify({ teams, password: hashedPassword }), 'EX', this.ttl);
+      } catch (err) {
+        this.logger.warn('Cant save to cache', err);
+      }
+    }
 
     return done(null, teams);
   }).catch((err) => {
