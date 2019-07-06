@@ -1,8 +1,8 @@
 const moxios = require('moxios');
 
-const Bitbucket2Test = require('../bitbucket2');
+const Bitbucket = require('../models/Bitbucket');
 
-describe('Bitbucket2', () => {
+describe('Bitbucket', () => {
   beforeEach(() => {
     moxios.install();
   });
@@ -22,7 +22,7 @@ describe('Bitbucket2', () => {
           ],
         },
       });
-      return new Bitbucket2Test('u', 'p').getTeams('member').then((response) => {
+      return new Bitbucket('u', 'p', console).getTeams('member').then((response) => {
         expect(response).toEqual({
           role: 'member',
           teams: ['foo', 'bar'],
@@ -49,7 +49,7 @@ describe('Bitbucket2', () => {
           ],
         },
       });
-      return new Bitbucket2Test('u', 'p').getTeams('member').then((response) => {
+      return new Bitbucket('u', 'p', console).getTeams('member').then((response) => {
         expect(response).toEqual({
           role: 'member',
           teams: ['foo', 'bar', 'baz'],
@@ -60,7 +60,7 @@ describe('Bitbucket2', () => {
 
   describe('#getPrivileges', () => {
     it('should return privileges returned by getTeams', () => {
-      const bb = new Bitbucket2Test('u', 'p');
+      const bb = new Bitbucket('u', 'p', console);
       bb.getTeams = role => new Promise((resolve) => {
         resolve({ role, teams: [`${role}Team`] });
       });

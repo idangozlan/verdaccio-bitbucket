@@ -2,12 +2,10 @@
 [![Download Status](https://img.shields.io/npm/dm/verdaccio-bitbucket.svg)](https://www.npmjs.com/package/verdaccio-bitbucket)
 [![Download Status](https://img.shields.io/npm/v/verdaccio-bitbucket.svg)](https://www.npmjs.com/package/verdaccio-bitbucket)
 
-`verdaccio-bitbucket` is a fork of `sinopia-bitbucket`. It aims to keep backwards compatibility with sinopia, while keeping up with npm changes.
-
 # Verdaccio Module For User Auth Via Bitbucket
 
 This module provides an engine for Verdaccio to make user authorizations via 
-Bitbucket API.
+Bitbucket 2.0 API.
 
 ## Install
 
@@ -20,13 +18,32 @@ As simple as running:
     auth:
       bitbucket:
         allow: TeamOne(admin), TeamX(admin|collaborator), TeamZ
-        ttl: 604800 # make cache live for 7 days, optional, default = 1 day
-        defaultMailDomain: gmail.com # specify a default domain for the username
+        ttl: 604800 # 7 days
+        defaultMailDomain: gmail.com
+        hashPassword: true
+        cache: redis
+        redis:
+            host: '127.0.0.1'
+            port: 6379
+            prefix: 'verdaccio-bitbucket:'
     ...
     packages:
       '@myscope/*':
         allow_access: TeamZ
         allow_publish: TeamOne, TeamX # restrict to bitbucket teams
+
+
+#### Auth Config
+| Key               | Description                                                                                                                                                   | Options              | Default value |
+|-------------------|---------------------------------------------------------------------------------------------------------------------------------------------------------------|----------------------|---------------|
+| `allow`             | Bitbucket teams which should be allowed to access the registry, separated by user groups and commas. For ex. TeamOne(admin), TeamX(admin|collaborator), TeamZ | {string}             | null          |
+| `ttl`               | Time-to-live of cache (seconds). For ex. 604800 = 7 days                                                                                                      | {number}             | 604800        |
+| `defaultMailDomain` | Specify a default domain for the username, For ex. "gmail.com"                                                                                                | {string}             | null          |
+| `hashPassword`      | When using cache, it will save the passwords hashed (highly recommended)                                                                                      | {true|false}         | true          |
+| `cache`             | Caching engine to prevent re-accessing bitbucket servers. For Production usage and scaling, Redis is highly recommended                                       | redis|in-memory|null | null          |
+| `redis`             | YAML Nested Map of options for Redis Client creation (look on the config sample). Read more https://github.com/NodeRedis/node_redis                           | YAML Nested Map      |               |
+
+* `hashPassword` option is currently not supported by `verdaccio/verdaccio` docker image, since it's running on Linux Alpine without the `bcrypt` required packages.
 
 ### How does it work?
 
@@ -50,13 +67,13 @@ To log in using NPM, run:
 ```
     npm adduser --registry  https://your.registry.local
 ```
-Since the username for bitbucket is the email addresses 
-and cannot contain `@`, replace the `@` with two peiods `..`
+Since the username for Bitbucket is the email addresses 
+and cannot contain `@`, replace the `@` with two periods `..`
 The email address is then parsed and converted to a normal email address for authentication
 
 Alternatively you can specify the `defaultMailDomain` configuration option,
 if most (or all) your users use the same mail provider or an own mail server.
-In this case the users have to provide only the local-part of there bitbucket
+In this case the users have to provide only the local-part of there Bitbucket
 email address (the part before the `@`) as a username.
 It is still possible to override the default domain via the `..` convention
 mentioned above.
