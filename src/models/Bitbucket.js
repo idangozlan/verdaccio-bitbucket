@@ -11,13 +11,11 @@ function Bitbucket(username, password, logger) {
 }
 
 Bitbucket.prototype.getUser = function getUser() {
-  // currently not in use, maybe in the future it will be.
   const { username, password, apiUrl } = this;
   return axios({
     method: 'get',
-    url: `${apiUrl}/user`,
-    auth: { username, password },
-  }).then(response => response.data);
+    url: `${apiUrl}/users/${username}`,
+  }).then(response => ({ teams: [response.data.nickname], role: '' }) );
 };
 
 Bitbucket.prototype.getTeams = function getTeams(role) {
@@ -46,6 +44,7 @@ Bitbucket.prototype.getPrivileges = function getPrivileges() {
     this.getTeams('member'),
     this.getTeams('contributor'),
     this.getTeams('admin'),
+    this.getUser(),
   ]).then((values) => {
     const result = {};
     values.forEach(({ role, teams }) => {
