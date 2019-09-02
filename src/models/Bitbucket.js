@@ -11,7 +11,7 @@ function Bitbucket(username, password, logger) {
 }
 
 Bitbucket.prototype.getUser = function getUser() {
-  const { username, password, apiUrl } = this;
+  const { username, apiUrl } = this;
   return axios({
     method: 'get',
     url: `${apiUrl}/users/${username}`,
