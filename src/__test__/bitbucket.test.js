@@ -13,12 +13,12 @@ describe('Bitbucket', () => {
   describe('#getTeams', () => {
     it('should return the teams', () => {
       expect.assertions(1);
-      moxios.stubRequest(/^https:\/\/api.bitbucket.org\/2.0\/teams\?role=member&pagelen=\d+$/, {
+      moxios.stubRequest(/^https:\/\/api.bitbucket.org\/2.0\/workspaces\?role=member&pagelen=\d+$/, {
         status: 200,
         response: {
           values: [
-            { username: 'foo' },
-            { username: 'bar' },
+            { slug: 'foo' },
+            { slug: 'bar' },
           ],
         },
       });
@@ -31,12 +31,12 @@ describe('Bitbucket', () => {
     });
 
     it('should follow next page links', () => {
-      moxios.stubRequest(/^https:\/\/api.bitbucket.org\/2.0\/teams\?role=member&pagelen=\d+$/, {
+      moxios.stubRequest(/^https:\/\/api.bitbucket.org\/2.0\/workspaces\?role=member&pagelen=\d+$/, {
         status: 200,
         response: {
           next: 'https://example.org/page2',
           values: [
-            { username: 'foo' },
+            { slug: 'foo' },
           ],
         },
       });
@@ -44,8 +44,8 @@ describe('Bitbucket', () => {
         status: 200,
         response: {
           values: [
-            { username: 'bar' },
-            { username: 'baz' },
+            { slug: 'bar' },
+            { slug: 'baz' },
           ],
         },
       });
@@ -68,8 +68,8 @@ describe('Bitbucket', () => {
         expect(response).toEqual({
           teams: {
             memberTeam: 'member',
-            contributorTeam: 'contributor',
-            adminTeam: 'admin',
+            collaboratorTeam: 'collaborator',
+            ownerTeam: 'owner',
           },
         });
       });
