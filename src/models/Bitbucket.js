@@ -23,7 +23,7 @@ Bitbucket.prototype.getUser = function getUser() {
 Bitbucket.prototype.getTeams = function getTeams(role) {
   const { username, password, apiUrl } = this;
   const teams = [];
-  const endpoint = `${apiUrl}/workspaces?role=${role}&pagelen=100`
+  const endpoint = `${apiUrl}/workspaces?role=${role}&pagelen=100`;
   this.logger.debug(`[bitbucket] getting teams for ${username}, url: ${endpoint}, role: ${role}`);
 
   function callApi(url) {
