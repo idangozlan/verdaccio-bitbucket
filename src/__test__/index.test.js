@@ -1,12 +1,12 @@
 const NodeCache = require('node-cache');
-const bcrypt = require('bcrypt');
+const { bcryptVerify, bcrypt } = require('hash-wasm');
 const Auth = require('..');
 const Bitbucket = require('../models/Bitbucket');
 const getRedisClient = require('../redis');
 
 jest.mock('../redis');
 jest.mock('node-cache');
-jest.mock('bcrypt');
+jest.mock('hash-wasm');
 jest.mock('../models/Bitbucket');
 
 describe('Auth', () => {
@@ -149,13 +149,12 @@ describe('Auth', () => {
     });
 
     it('get first from Bitbucket and then from in-memory (with hashing)', async () => {
-      expect.assertions(9);
+      expect.assertions(11);
 
       Bitbucket.prototype.getPrivileges.mockImplementation(() => new Promise((resolve) => {
         resolve({ teams: { foo: 'admin' } });
       }));
       const auth = createAuth('foo(admin)', 'in-memory', {}, true);
-      bcrypt.compareSync.mockImplementationOnce(() => true);
       NodeCache.prototype.get.mockImplementationOnce(() => Promise.resolve(null));
 
       await auth.authenticate('u', 'p', (err, teams) => {
@@ -163,12 +162,14 @@ describe('Auth', () => {
         expect(teams).toEqual(['foo']);
       });
       expect(NodeCache.mock.instances[0].get.mock.calls).toEqual([['u']]);
+      expect(bcrypt).toHaveBeenCalled();
 
       /* second call */
 
       NodeCache.prototype.get.mockImplementationOnce(() => new Promise((resolve) => {
         resolve(JSON.stringify({ teams: ['foo'], password: 'p' }));
       }));
+      bcryptVerify.mockImplementationOnce(() => Promise.resolve(true));
 
       await auth.authenticate('u', 'p', (err, teams) => {
         expect(err).toEqual(null);
@@ -180,6 +181,7 @@ describe('Auth', () => {
       expect(Bitbucket.mock.instances[0].getPrivileges.mock.calls.length).toEqual(1);
       expect(Bitbucket.mock.instances[0].constructor.mock.calls).toEqual([['u', 'p', { warn: expect.any(Function) }]]);
       expect(Bitbucket.mock.instances.length).toEqual(1);
+      expect(bcryptVerify.mock.calls).toEqual([[{ password: 'p', hash: 'p' }]]);
     });
 
     it('fail due to missing redis configuration', async () => {
@@ -195,7 +197,6 @@ describe('Auth', () => {
     it('get first from Bitbucket and then from redis', async () => {
       expect.assertions(9);
 
-      bcrypt.compareSync.mockImplementationOnce(() => true);
       Bitbucket.prototype.getPrivileges.mockImplementation(() => new Promise((resolve) => {
         resolve({ teams: { foo: 'admin' } });
       }));

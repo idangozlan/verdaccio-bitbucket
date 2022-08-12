@@ -39,7 +39,7 @@
   },
   "dependencies": {
     "axios": "^0.21.0",
-    "bcrypt": "^5.0.0",
+    "hash-wasm": "^4.9.0",
     "node-cache": "^5.1.0",
     "redis": "^3.0.2"
   },

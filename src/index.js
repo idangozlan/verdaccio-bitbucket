@@ -1,4 +1,6 @@
 const NodeCache = require('node-cache');
+const { bcryptVerify, bcrypt } = require('hash-wasm');
+const { randomFillSync } = require('crypto');
 const Bitbucket = require('./models/Bitbucket');
 const getRedisClient = require('./redis');
 const { CACHE_REDIS, CACHE_IN_MEMORY } = require('./constants');
@@ -69,9 +71,26 @@ function Auth(config, stuff) {
       this.cache = false;
   }
 
-  this.bcrypt = config.hashPassword !== false ? require('bcrypt') : { // eslint-disable-line
-    compareSync: (a, b) => (a === b),
-    hashSync: (password) => password,
+  this.hasher = config.hashPassword !== false ? {
+    hash(password) {
+      const salt = new Uint8Array(16);
+      randomFillSync(salt);
+
+      return bcrypt({
+        password,
+        salt,
+      });
+    },
+    verify(options) {
+      return bcryptVerify(options);
+    },
+  } : {
+    hash(password) {
+      return Promise.resolve(password);
+    },
+    verify(options) {
+      return Promise.resolve(options.password === options.hash);
+    },
   };
 
   this.allow = parseAllow(config.allow);
@@ -135,7 +154,7 @@ Auth.prototype.authenticate = async function authenticate(username, password, do
       if (cached) {
         cached = JSON.parse(cached);
       }
-      if (cached && this.bcrypt.compareSync(password, cached.password)) {
+      if (cached && await this.hasher.verify({ password, hash: cached.password })) {
         return done(null, cached.teams);
       }
     } catch (err) {
@@ -163,7 +182,7 @@ Auth.prototype.authenticate = async function authenticate(username, password, do
       }, this);
 
     if (this.cache) {
-      const hashedPassword = this.bcrypt.hashSync(password, 10);
+      const hashedPassword = await this.hasher.hash(password);
       try {
         await this.cache.set(username, JSON.stringify({ teams, password: hashedPassword }), 'EX', this.ttl);
       } catch (err) {
