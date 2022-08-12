@@ -9,10 +9,6 @@ describe('Auth', () => {
     jest.clearAllMocks();
   });
 
-  afterAll(() => {
-    redis.quit();
-  });
-
   it('wrap redis', async () => {
     expect.assertions(3);
 
