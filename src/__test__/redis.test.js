@@ -20,7 +20,6 @@ describe('Auth', () => {
       host: 'localhost',
     });
 
-
     let cacheRes = await client.get('testKey');
     expect(cacheRes).toEqual(null);
     await client.set('testKey', 'some-data');

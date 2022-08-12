@@ -71,7 +71,7 @@ function Auth(config, stuff) {
 
   this.bcrypt = config.hashPassword !== false ? require('bcrypt') : { // eslint-disable-line
     compareSync: (a, b) => (a === b),
-    hashSync: password => password,
+    hashSync: (password) => password,
   };
 
   this.allow = parseAllow(config.allow);

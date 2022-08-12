@@ -17,7 +17,7 @@ Bitbucket.prototype.getUser = function getUser() {
     method: 'get',
     url: `${apiUrl}/user`,
     auth: { username, password },
-  }).then(response => response.data);
+  }).then((response) => response.data);
 };
 
 Bitbucket.prototype.getTeams = function getTeams(role) {
@@ -32,7 +32,7 @@ Bitbucket.prototype.getTeams = function getTeams(role) {
       url,
       auth: { username, password },
     }).then((response) => {
-      teams.push(...response.data.values.map(x => x.slug));
+      teams.push(...response.data.values.map((x) => x.slug));
       if (response.data.next) return callApi(response.data.next);
       return { role, teams };
     });
@@ -40,7 +40,6 @@ Bitbucket.prototype.getTeams = function getTeams(role) {
 
   return callApi(`${endpoint}`);
 };
-
 
 Bitbucket.prototype.getPrivileges = function getPrivileges() {
   return Promise.all([
@@ -50,11 +49,10 @@ Bitbucket.prototype.getPrivileges = function getPrivileges() {
   ]).then((values) => {
     const result = {};
     values.forEach(({ role, teams }) => {
-      Object.assign(result, ...teams.map(t => ({ [t]: role })));
+      Object.assign(result, ...teams.map((t) => ({ [t]: role })));
     });
     return { teams: result };
   });
 };
-
 
 module.exports = Bitbucket;
