@@ -12,7 +12,8 @@
   ],
   "scripts": {
     "lint": "eslint ./src --fix",
-    "test": "jest"
+    "test": "jest",
+    "prepare": "husky install"
   },
   "main": "src/index.js",
   "version": "3.0.1",
@@ -47,7 +48,7 @@
     "eslint-config-airbnb-base": "^15.0.0",
     "eslint-plugin-import": "^2.26.0",
     "eslint-plugin-jest": "^26.8.2",
-    "husky": "^3.1.0",
+    "husky": "^8.0.0",
     "jest": "^24.9.0",
     "moxios": "^0.4.0",
     "redis-mock": "^0.44.0"
