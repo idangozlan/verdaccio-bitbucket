@@ -9,17 +9,12 @@ describe('Auth', () => {
     jest.clearAllMocks();
   });
 
-  afterAll(() => {
-    redis.quit();
-  });
-
   it('wrap redis', async () => {
     expect.assertions(3);
 
     const client = getRedisClient({
       host: 'localhost',
     });
-
 
     let cacheRes = await client.get('testKey');
     expect(cacheRes).toEqual(null);

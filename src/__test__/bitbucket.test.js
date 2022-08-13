@@ -61,7 +61,7 @@ describe('Bitbucket', () => {
   describe('#getPrivileges', () => {
     it('should return privileges returned by getTeams', () => {
       const bb = new Bitbucket('u', 'p', console);
-      bb.getTeams = role => new Promise((resolve) => {
+      bb.getTeams = (role) => new Promise((resolve) => {
         resolve({ role, teams: [`${role}Team`] });
       });
       return bb.getPrivileges().then((response) => {
